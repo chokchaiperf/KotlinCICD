@@ -25,13 +25,13 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('src/**/*.gradle*', 'src/gradle/libs.versions.toml') }}
 
       - name: Grant permission
-        run: chmod +x gradlew
+        run: chmod +x src/gradlew
 
       - name: Build
-        run: ./gradlew build
+        run: cd src && ./gradlew build
 
       - name: Run Tests
-        run: ./gradlew test
+        run: cd src && ./gradlew test
