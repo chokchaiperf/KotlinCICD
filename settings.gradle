@@ -1,0 +1,2 @@
+project('KotlinCICD').projectDir = new File(rootDir, 'src/')
+include ':KotlinCICD'
