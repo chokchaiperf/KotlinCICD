@@ -10,24 +10,24 @@ jobs:
 
       - run:
           name: Give permission
-          command: chmod +x ./gradlew
+          command: chmod +x ./src/gradlew
 
       - restore_cache:
           keys:
-            - gradle-cache-{{ checksum "build.gradle" }}
+            - gradle-cache-{{ checksum "src/build.gradle.kts" }}
 
       - run:
           name: Build
-          command: ./gradlew build
+          command: cd src && ./gradlew build
 
       - run:
           name: Test
-          command: ./gradlew test
+          command: cd src && ./gradlew test
 
       - save_cache:
           paths:
             - ~/.gradle
-          key: gradle-cache-{{ checksum "build.gradle" }}
+          key: gradle-cache-{{ checksum "src/build.gradle.kts" }}
 
 workflows:
   version: 2
