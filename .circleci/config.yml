@@ -7,19 +7,40 @@ notify-success: &notify-success
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
       COMMIT_MSG=$(git log -1 --pretty=format:"%s")
-      REPO_URL="https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+
+      # แยก Normal build vs Tag build
+      if [ -n "$CIRCLE_TAG" ]; then
+        TAG=$CIRCLE_TAG
+
+        # Parse tag
+        if [[ $TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
+          RELEASE_SLOT="${BASH_REMATCH[1]}"
+          VERSION="v${BASH_REMATCH[2]}"
+          BUILD_DATE="${BASH_REMATCH[3]}"
+        fi
+
+        TITLE="🚀 Release: $VERSION ($RELEASE_SLOT)"
+        TAG_FIELD="{ \"name\": \"Tag\", \"value\": \"\`$TAG\`\", \"inline\": true },"
+        SLOT_FIELD="{ \"name\": \"Release Slot\", \"value\": \"\`$RELEASE_SLOT\`\", \"inline\": true },"
+        COLOR=5793266  # น้ำเงิน = release
+      else
+        TITLE="✅ Success: $CIRCLE_JOB"
+        TAG_FIELD=""
+        SLOT_FIELD=""
+        COLOR=3066993
+      fi
 
       curl -s -o /dev/null -H "Content-Type: application/json" -d "{
         \"embeds\": [{
-          \"title\": \"✅ Success: $CIRCLE_JOB\",
-          \"color\": 3066993,
+          \"title\": \"$TITLE\",
+          \"color\": $COLOR,
           \"fields\": [
-            { \"name\": \"Branch\", \"value\": \"\`$CIRCLE_BRANCH\`\", \"inline\": false },
-            { \"name\": \"Repository\", \"value\": \"[$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME]($REPO_URL)\", \"inline\": true },
-            { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true },
-            { \"name\": \"Event - push\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
+            { \"name\": \"Branch\", \"value\": \"\`${CIRCLE_BRANCH:-$CIRCLE_TAG}\`\", \"inline\": false },
+            $TAG_FIELD
+            $SLOT_FIELD
+            { \"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
             { \"name\": \"Triggered by\", \"value\": \"$CIRCLE_USERNAME\", \"inline\": true },
-            { \"name\": \"Workflow\", \"value\": \"$CIRCLE_JOB\", \"inline\": true }
+            { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true }
           ],
           \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
         }]
@@ -32,19 +53,40 @@ notify-failure: &notify-failure
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
       COMMIT_MSG=$(git log -1 --pretty=format:"%s")
-      REPO_URL="https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+
+      # แยก Normal build vs Tag build
+      if [ -n "$CIRCLE_TAG" ]; then
+        TAG=$CIRCLE_TAG
+
+        # Parse tag
+        if [[ $TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
+          RELEASE_SLOT="${BASH_REMATCH[1]}"
+          VERSION="v${BASH_REMATCH[2]}"
+          BUILD_DATE="${BASH_REMATCH[3]}"
+        fi
+
+        TITLE="🚀 Release: $VERSION ($RELEASE_SLOT)"
+        TAG_FIELD="{ \"name\": \"Tag\", \"value\": \"\`$TAG\`\", \"inline\": true },"
+        SLOT_FIELD="{ \"name\": \"Release Slot\", \"value\": \"\`$RELEASE_SLOT\`\", \"inline\": true },"
+        COLOR=5793266  # น้ำเงิน = release
+      else
+        TITLE="❌ Failure: $CIRCLE_JOB"
+        TAG_FIELD=""
+        SLOT_FIELD=""
+        COLOR=15158332
+      fi
 
       curl -s -o /dev/null -H "Content-Type: application/json" -d "{
         \"embeds\": [{
-          \"title\": \"❌ Failure: $CIRCLE_JOB\",
-          \"color\": 15158332,
+          \"title\": \"$TITLE\",
+          \"color\": $COLOR,
           \"fields\": [
-            { \"name\": \"Branch\", \"value\": \"\`$CIRCLE_BRANCH\`\", \"inline\": false },
-            { \"name\": \"Repository\", \"value\": \"[$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME]($REPO_URL)\", \"inline\": true },
-            { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true },
-            { \"name\": \"Event - push\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
+            { \"name\": \"Branch\", \"value\": \"\`${CIRCLE_BRANCH:-$CIRCLE_TAG}\`\", \"inline\": false },
+            $TAG_FIELD
+            $SLOT_FIELD
+            { \"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
             { \"name\": \"Triggered by\", \"value\": \"$CIRCLE_USERNAME\", \"inline\": true },
-            { \"name\": \"Workflow\", \"value\": \"$CIRCLE_JOB\", \"inline\": true }
+            { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true }
           ],
           \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
         }]
@@ -144,5 +186,15 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - android_build_test
-      - ios_build_test
+      - android_build_test:
+          filters:
+              tags:
+                only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  # match format ของคุณ
+              branches:
+                only: /.*/
+      - ios_build_test:
+          filters:
+              tags:
+                only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  # match format ของคุณ
+              branches:
+                only: /.*/
