@@ -6,6 +6,7 @@ notify-success: &notify-success
     when: on_success
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
+      COMMIT_MSG=$(git log -1 --pretty=format:"%s")
       REPO_URL="https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
 
       curl -s -o /dev/null -H "Content-Type: application/json" -d "{
@@ -16,7 +17,7 @@ notify-success: &notify-success
             { \"name\": \"Branch\", \"value\": \"\`$CIRCLE_BRANCH\`\", \"inline\": false },
             { \"name\": \"Repository\", \"value\": \"[$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME]($REPO_URL)\", \"inline\": true },
             { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true },
-            { \"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\`\", \"inline\": false },
+            { \"name\": \"Event - push\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
             { \"name\": \"Triggered by\", \"value\": \"$CIRCLE_USERNAME\", \"inline\": true },
             { \"name\": \"Workflow\", \"value\": \"$CIRCLE_JOB\", \"inline\": true }
           ],
@@ -30,6 +31,7 @@ notify-failure: &notify-failure
     when: on_fail
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
+      COMMIT_MSG=$(git log -1 --pretty=format:"%s")
       REPO_URL="https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
 
       curl -s -o /dev/null -H "Content-Type: application/json" -d "{
@@ -40,7 +42,7 @@ notify-failure: &notify-failure
             { \"name\": \"Branch\", \"value\": \"\`$CIRCLE_BRANCH\`\", \"inline\": false },
             { \"name\": \"Repository\", \"value\": \"[$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME]($REPO_URL)\", \"inline\": true },
             { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true },
-            { \"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\`\", \"inline\": false },
+            { \"name\": \"Event - push\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
             { \"name\": \"Triggered by\", \"value\": \"$CIRCLE_USERNAME\", \"inline\": true },
             { \"name\": \"Workflow\", \"value\": \"$CIRCLE_JOB\", \"inline\": true }
           ],
