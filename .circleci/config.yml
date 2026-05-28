@@ -44,6 +44,13 @@ jobs:
 
       - store_test_results:
           path: KotlinCICD/build/test-results
+      - run:
+          name: Notify Discord
+          when: always
+          command: |
+            curl -H "Content-Type: application/json" \
+            -d "{\"content\": \"Pipeline **$CIRCLE_PROJECT_REPONAME** finished on \`$CIRCLE_BRANCH\`\"}" \
+            $DISCORD_WEBHOOK_URL
 
   ios_build_test:
     macos:
@@ -86,6 +93,13 @@ jobs:
 
       - store_test_results:
           path: shared/build/test-results
+      - run:
+          name: Notify Discord
+          when: always
+          command: |
+            curl -H "Content-Type: application/json" \
+            -d "{\"content\": \"Pipeline **$CIRCLE_PROJECT_REPONAME** finished on \`$CIRCLE_BRANCH\`\"}" \
+            $DISCORD_WEBHOOK_URL
 
 workflows:
   build_and_test:

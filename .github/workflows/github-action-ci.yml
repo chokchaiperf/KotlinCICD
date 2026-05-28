@@ -43,6 +43,14 @@ jobs:
 
       - name: Run Android unit tests
         run: ./gradlew :KotlinCICD:testDebugUnitTest
+      - name: Notify Discord
+        if: always()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "Build ${{ github.workflow }}"
+          description: "Branch: ${{ github.ref_name }}"
 
   ios_build_test:
     runs-on: macos-latest
@@ -76,3 +84,11 @@ jobs:
 
       - name: Run iOS simulator tests
         run: ./gradlew :shared:iosSimulatorArm64Test
+      - name: Notify Discord
+        if: always()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "Build ${{ github.workflow }}"
+          description: "Branch: ${{ github.ref_name }}"
