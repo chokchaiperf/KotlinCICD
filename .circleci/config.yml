@@ -1,5 +1,14 @@
 version: 2.1
 
+notify-discord: &notify-discord
+  run:
+    name: Notify Discord
+    when: always
+    command: |
+      curl -H "Content-Type: application/json" \
+        -d "{\"content\": \"Pipeline **$CIRCLE_PROJECT_REPONAME** finished on \`$CIRCLE_BRANCH\`\"}" \
+        $DISCORD_WEBHOOK_URL
+
 jobs:
   android_build_test:
     docker:
@@ -89,15 +98,6 @@ jobs:
           path: shared/build/test-results
       - *notify-discord
 
-notify-discord: &notify-discord
-  run:
-    name: Notify Discord
-    when: always
-    command: |
-      curl -H "Content-Type: application/json" \
-        -d "{\"content\": \"Pipeline **$CIRCLE_PROJECT_REPONAME** finished on \`$CIRCLE_BRANCH\`\"}" \
-        $DISCORD_WEBHOOK_URL
-        
 workflows:
   build_and_test:
     jobs:
