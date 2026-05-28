@@ -189,12 +189,12 @@ workflows:
       - android_build_test:
           filters:
               tags:
-                only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  # match format ของคุณ
+                only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/
               branches:
                 only: /.*/
       - ios_build_test:
           filters:
               tags:
-                only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  # match format ของคุณ
+                only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  
               branches:
                 only: /.*/
