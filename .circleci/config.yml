@@ -24,7 +24,7 @@ notify-success: &notify-success
         SLOT_FIELD="{ \"name\": \"Release Slot\", \"value\": \"\`$RELEASE_SLOT\`\", \"inline\": true },"
         COLOR=5793266  # น้ำเงิน = release
       else
-        TITLE="✅ Success: $CIRCLE_JOB"
+        TITLE="CircleCI ✅ Success: $CIRCLE_JOB"
         TAG_FIELD=""
         SLOT_FIELD=""
         COLOR=3066993
@@ -65,12 +65,12 @@ notify-failure: &notify-failure
           BUILD_DATE="${BASH_REMATCH[3]}"
         fi
 
-        TITLE="🚀 Release: $VERSION ($RELEASE_SLOT)"
+        TITLE="CircleCI 🚀 Release: $VERSION ($RELEASE_SLOT)"
         TAG_FIELD="{ \"name\": \"Tag\", \"value\": \"\`$TAG\`\", \"inline\": true },"
         SLOT_FIELD="{ \"name\": \"Release Slot\", \"value\": \"\`$RELEASE_SLOT\`\", \"inline\": true },"
         COLOR=5793266  # น้ำเงิน = release
       else
-        TITLE="❌ Failure: $CIRCLE_JOB"
+        TITLE="CircleCI ❌ Failure: $CIRCLE_JOB"
         TAG_FIELD=""
         SLOT_FIELD=""
         COLOR=15158332

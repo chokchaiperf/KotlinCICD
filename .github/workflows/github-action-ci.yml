@@ -50,7 +50,7 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: ${{ job.status }}
           title: "Build ${{ github.workflow }}"
-          description: "Branch: ${{ github.ref_name }}"
+          description: "Github Action Branch: ${{ github.ref_name }}"
 
   ios_build_test:
     runs-on: macos-latest
@@ -91,4 +91,4 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: ${{ job.status }}
           title: "Build ${{ github.workflow }}"
-          description: "Branch: ${{ github.ref_name }}"
+          description: "Github Action Branch: ${{ github.ref_name }}"
