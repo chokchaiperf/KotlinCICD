@@ -7,6 +7,7 @@ notify-telegram: &notify-telegram
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
       COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+      NL=$'\n'
  
       # Parse tag
       if [ -n "$CIRCLE_TAG" ]; then
@@ -22,30 +23,29 @@ notify-telegram: &notify-telegram
           esac
         fi
         TITLE="🚀 <b>Release: $APP_VERSION</b>"
-        SLOT_LINE="📦 <b>Release Slot</b>  <code>$SLOT_DISPLAY</code>"
-        VERSION_LINE="🏷 <b>App Version</b>  <code>$APP_VERSION</code>"
-        EXTRA="$SLOT_LINE\n$VERSION_LINE\n"
+        EXTRA="${NL}📦 <b>Release Slot</b>  <code>$SLOT_DISPLAY</code>${NL}🏷 <b>App Version</b>  <code>$APP_VERSION</code>"
       else
         TITLE="✅ <b>Success: $CIRCLE_JOB</b>"
         EXTRA=""
       fi
  
-      MESSAGE="$TITLE\n\n"
-      MESSAGE+="🌿 <b>Branch</b>  <code>${CIRCLE_BRANCH:-$CIRCLE_TAG}</code>\n"
-      MESSAGE+="$EXTRA"
-      MESSAGE+="📌 <b>Commit</b>\n<code>$SHORT_SHA</code> $COMMIT_MSG\n\n"
-      MESSAGE+="👤 <b>Triggered by</b>  $CIRCLE_USERNAME\n"
+      MESSAGE="${TITLE}${NL}${NL}"
+      MESSAGE+="🌿 <b>Branch</b>  <code>${CIRCLE_BRANCH:-$CIRCLE_TAG}</code>"
+      MESSAGE+="${EXTRA:+$EXTRA}"
+      MESSAGE+="${NL}📌 <b>Commit</b>${NL}"
+      MESSAGE+="<code>$SHORT_SHA</code> $COMMIT_MSG${NL}${NL}"
+      MESSAGE+="👤 <b>Triggered by</b>  $CIRCLE_USERNAME${NL}"
       MESSAGE+="🔗 <a href=\"$CIRCLE_BUILD_URL\">Build #$CIRCLE_BUILD_NUM</a>"
  
+      # ใช้ jq build JSON เพื่อหลีกเลี่ยง quote และ special character ใน URL
+      jq -n \
+        --arg chat_id "$TELEGRAM_CHAT_ID" \
+        --arg text "$MESSAGE" \
+        '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' | \
       curl -s -o /dev/null -X POST \
         "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -H "Content-Type: application/json" \
-        -d "{
-          \"chat_id\": \"$TELEGRAM_CHAT_ID\",
-          \"text\": \"$MESSAGE\",
-          \"parse_mode\": \"HTML\",
-          \"disable_web_page_preview\": true
-        }"
+        -d @-
 
 jobs:
   android_build_test:
