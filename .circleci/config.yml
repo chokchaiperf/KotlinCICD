@@ -7,7 +7,7 @@ notify-telegram: &notify-telegram
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
       COMMIT_MSG=$(git log -1 --pretty=format:"%s")
-
+ 
       # Parse tag
       if [ -n "$CIRCLE_TAG" ]; then
         if [[ $CIRCLE_TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
@@ -21,29 +21,29 @@ notify-telegram: &notify-telegram
             *)       SLOT_DISPLAY=$(echo $SLOT_KEY | tr '[:lower:]' '[:upper:]') ;;
           esac
         fi
-        TITLE="🚀 *Release: $APP_VERSION*"
-        SLOT_LINE="📦 *Release Slot* \`$SLOT_DISPLAY\`"
-        VERSION_LINE="🏷 *App Version* \`$APP_VERSION\`"
+        TITLE="🚀 <b>Release: $APP_VERSION</b>"
+        SLOT_LINE="📦 <b>Release Slot</b>  <code>$SLOT_DISPLAY</code>"
+        VERSION_LINE="🏷 <b>App Version</b>  <code>$APP_VERSION</code>"
         EXTRA="$SLOT_LINE\n$VERSION_LINE\n"
       else
-        TITLE="✅ *Success: $CIRCLE_JOB*"
+        TITLE="✅ <b>Success: $CIRCLE_JOB</b>"
         EXTRA=""
       fi
-
+ 
       MESSAGE="$TITLE\n\n"
-      MESSAGE+="🌿 *Branch* \`${CIRCLE_BRANCH:-$CIRCLE_TAG}\`\n"
+      MESSAGE+="🌿 <b>Branch</b>  <code>${CIRCLE_BRANCH:-$CIRCLE_TAG}</code>\n"
       MESSAGE+="$EXTRA"
-      MESSAGE+="📌 *Commit*\n\`$SHORT_SHA\` $COMMIT_MSG\n\n"
-      MESSAGE+="👤 *Triggered by* $CIRCLE_USERNAME\n"
-      MESSAGE+="🔗 [Build \#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)"
-
+      MESSAGE+="📌 <b>Commit</b>\n<code>$SHORT_SHA</code> $COMMIT_MSG\n\n"
+      MESSAGE+="👤 <b>Triggered by</b>  $CIRCLE_USERNAME\n"
+      MESSAGE+="🔗 <a href=\"$CIRCLE_BUILD_URL\">Build #$CIRCLE_BUILD_NUM</a>"
+ 
       curl -s -o /dev/null -X POST \
         "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
         -H "Content-Type: application/json" \
         -d "{
           \"chat_id\": \"$TELEGRAM_CHAT_ID\",
           \"text\": \"$MESSAGE\",
-          \"parse_mode\": \"MarkdownV2\",
+          \"parse_mode\": \"HTML\",
           \"disable_web_page_preview\": true
         }"
 
