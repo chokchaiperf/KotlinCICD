@@ -139,5 +139,15 @@ jobs:
 workflows:
   build_and_test:
     jobs:
-      - android_build_test
-      - ios_build_test
+      - android_build_test:
+          filters:
+            tags:
+              only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  # match format ของคุณ
+            branches:
+              only: /.*/
+      - ios_build_test:
+          filters:
+            tags:
+              only: /^[a-zA-Z]+-v\d+\.\d+\.\d+-\d{6}$/  # match format ของคุณ
+            branches:
+              only: /.*/
