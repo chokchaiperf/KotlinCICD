@@ -8,7 +8,7 @@ notify-telegram: &notify-telegram
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
       COMMIT_MSG=$(git log -1 --pretty=format:"%s")
 
-      # Parse tag (ถ้ามี)
+      # Parse tag
       if [ -n "$CIRCLE_TAG" ]; then
         if [[ $CIRCLE_TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
           SLOT_KEY="${BASH_REMATCH[1]}"
