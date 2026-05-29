@@ -1,96 +1,51 @@
 version: 2.1
 
-notify-success: &notify-success
+notify-telegram: &notify-telegram
   run:
-    name: Notify Discord (Success)
+    name: Notify Telegram
     when: on_success
     command: |
       SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
       COMMIT_MSG=$(git log -1 --pretty=format:"%s")
 
-      # แยก Normal build vs Tag build
+      # Parse tag (ถ้ามี)
       if [ -n "$CIRCLE_TAG" ]; then
-        TAG=$CIRCLE_TAG
-
-        # Parse tag
-        if [[ $TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
-          RELEASE_SLOT="${BASH_REMATCH[1]}"
-          VERSION="v${BASH_REMATCH[2]}"
-          BUILD_DATE="${BASH_REMATCH[3]}"
+        if [[ $CIRCLE_TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
+          SLOT_KEY="${BASH_REMATCH[1]}"
+          APP_VERSION="v${BASH_REMATCH[2]}"
+          case $SLOT_KEY in
+            sand)    SLOT_DISPLAY="Sandbox" ;;
+            dev)     SLOT_DISPLAY="Development" ;;
+            staging) SLOT_DISPLAY="Staging" ;;
+            prod)    SLOT_DISPLAY="Production" ;;
+            *)       SLOT_DISPLAY=$(echo $SLOT_KEY | tr '[:lower:]' '[:upper:]') ;;
+          esac
         fi
-
-        TITLE="CircleCI 🚀 Release: $VERSION ($RELEASE_SLOT)"
-        TAG_FIELD="{ \"name\": \"Tag\", \"value\": \"\`$TAG\`\", \"inline\": true },"
-        SLOT_FIELD="{ \"name\": \"Release Slot\", \"value\": \"\`$RELEASE_SLOT\`\", \"inline\": true },"
-        COLOR=5793266
+        TITLE="🚀 *Release: $APP_VERSION*"
+        SLOT_LINE="📦 *Release Slot* \`$SLOT_DISPLAY\`"
+        VERSION_LINE="🏷 *App Version* \`$APP_VERSION\`"
+        EXTRA="$SLOT_LINE\n$VERSION_LINE\n"
       else
-        TITLE="CircleCI ✅ Success: $CIRCLE_JOB"
-        TAG_FIELD=""
-        SLOT_FIELD=""
-        COLOR=3066993
+        TITLE="✅ *Success: $CIRCLE_JOB*"
+        EXTRA=""
       fi
 
-      curl -s -o /dev/null -H "Content-Type: application/json" -d "{
-        \"embeds\": [{
-          \"title\": \"$TITLE\",
-          \"color\": $COLOR,
-          \"fields\": [
-            { \"name\": \"Branch\", \"value\": \"\`${CIRCLE_BRANCH:-$CIRCLE_TAG}\`\", \"inline\": false },
-            $TAG_FIELD
-            $SLOT_FIELD
-            { \"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
-            { \"name\": \"Triggered by\", \"value\": \"$CIRCLE_USERNAME\", \"inline\": true },
-            { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true }
-          ],
-          \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-        }]
-      }" "$DISCORD_WEBHOOK_URL"
+      MESSAGE="$TITLE\n\n"
+      MESSAGE+="🌿 *Branch* \`${CIRCLE_BRANCH:-$CIRCLE_TAG}\`\n"
+      MESSAGE+="$EXTRA"
+      MESSAGE+="📌 *Commit*\n\`$SHORT_SHA\` $COMMIT_MSG\n\n"
+      MESSAGE+="👤 *Triggered by* $CIRCLE_USERNAME\n"
+      MESSAGE+="🔗 [Build \#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)"
 
-notify-failure: &notify-failure
-  run:
-    name: Notify Discord (Failure)
-    when: on_fail
-    command: |
-      SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
-      COMMIT_MSG=$(git log -1 --pretty=format:"%s")
-
-      # แยก Normal build vs Tag build
-      if [ -n "$CIRCLE_TAG" ]; then
-        TAG=$CIRCLE_TAG
-
-        # Parse tag
-        if [[ $TAG =~ ^([a-zA-Z]+)-v([0-9]+\.[0-9]+\.[0-9]+)-([0-9]{6})$ ]]; then
-          RELEASE_SLOT="${BASH_REMATCH[1]}"
-          VERSION="v${BASH_REMATCH[2]}"
-          BUILD_DATE="${BASH_REMATCH[3]}"
-        fi
-
-        TITLE="CircleCI 🚀 Release: $VERSION ($RELEASE_SLOT)"
-        TAG_FIELD="{ \"name\": \"Tag\", \"value\": \"\`$TAG\`\", \"inline\": true },"
-        SLOT_FIELD="{ \"name\": \"Release Slot\", \"value\": \"\`$RELEASE_SLOT\`\", \"inline\": true },"
-        COLOR=5793266
-      else
-        TITLE="CircleCI ❌ Failure: $CIRCLE_JOB"
-        TAG_FIELD=""
-        SLOT_FIELD=""
-        COLOR=15158332
-      fi
-
-      curl -s -o /dev/null -H "Content-Type: application/json" -d "{
-        \"embeds\": [{
-          \"title\": \"$TITLE\",
-          \"color\": $COLOR,
-          \"fields\": [
-            { \"name\": \"Branch\", \"value\": \"\`${CIRCLE_BRANCH:-$CIRCLE_TAG}\`\", \"inline\": false },
-            $TAG_FIELD
-            $SLOT_FIELD
-            { \"name\": \"Commit\", \"value\": \"\`$SHORT_SHA\` $COMMIT_MSG\", \"inline\": false },
-            { \"name\": \"Triggered by\", \"value\": \"$CIRCLE_USERNAME\", \"inline\": true },
-            { \"name\": \"Build\", \"value\": \"[#$CIRCLE_BUILD_NUM]($CIRCLE_BUILD_URL)\", \"inline\": true }
-          ],
-          \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-        }]
-      }" "$DISCORD_WEBHOOK_URL"
+      curl -s -o /dev/null -X POST \
+        "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"chat_id\": \"$TELEGRAM_CHAT_ID\",
+          \"text\": \"$MESSAGE\",
+          \"parse_mode\": \"MarkdownV2\",
+          \"disable_web_page_preview\": true
+        }"
 
 jobs:
   android_build_test:
@@ -136,8 +91,7 @@ jobs:
 
       - store_test_results:
           path: KotlinCICD/build/test-results
-      - *notify-success
-      - *notify-failure
+      - *notify-telegram
 
   ios_build_test:
     macos:
@@ -180,8 +134,7 @@ jobs:
 
       - store_test_results:
           path: shared/build/test-results
-      - *notify-success
-      - *notify-failure
+      - *notify-telegram
 
 workflows:
   build_and_test:
